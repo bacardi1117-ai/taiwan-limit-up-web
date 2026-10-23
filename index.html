@@ -1,0 +1,61 @@
+<!doctype html>
+<html lang="zh-Hant">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="description" content="台股上市與上櫃普通股每日漲停紀錄、交易日連板與漲停排行榜。">
+  <meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'self' https://script.google.com https://script.googleusercontent.com; style-src 'self'; base-uri 'none'; form-action 'none'">
+  <title>漲停觀測站｜台股交易日統計</title>
+  <link rel="stylesheet" href="styles.css">
+  <script defer src="config.js"></script>
+  <script defer src="stats.js"></script>
+  <script defer src="app.js"></script>
+</head>
+<body>
+  <div class="topline"></div>
+  <header class="site-header wrap">
+    <a class="brand" href="#top" aria-label="漲停觀測站首頁"><span class="brand-mark">↗</span><span>漲停觀測站<small>TAIWAN LIMIT UP MONITOR</small></span></a>
+    <span class="header-tag">TWSE / TPEx · 官方資料</span>
+  </header>
+  <main id="top" class="wrap">
+    <section class="hero" aria-labelledby="page-title">
+      <div class="eyebrow"><span class="live-dot"></span> DAILY MARKET SIGNAL</div>
+      <h1 id="page-title">看見漲停，<br><em>也看見資料的邊界。</em></h1>
+      <p>以交易日為單位整理台股漲停紀錄。缺漏日期會明確標示，連板不會靠日曆天數猜測。</p>
+      <div class="meta-line" id="coverage">正在讀取資料涵蓋範圍…</div>
+    </section>
+
+    <section class="panel filters" aria-label="統計條件">
+      <div class="filter-group"><label for="period">觀察區間</label><select id="period"><option value="5">近 5 個交易日</option><option value="10">近 10 個交易日</option><option value="20" selected>近 20 個交易日</option><option value="30">近 30 個交易日</option><option value="60">近 60 個交易日</option><option value="custom">自訂交易日數</option></select></div>
+      <div class="filter-group custom-group" id="custom-group" hidden><label for="custom-days">交易日數（1–120）</label><input id="custom-days" type="number" min="1" max="120" value="20"></div>
+      <div class="filter-group"><label for="market">市場</label><select id="market"><option value="ALL">上市 + 上櫃</option><option value="TWSE">上市 TWSE</option><option value="TPEx">上櫃 TPEx</option></select></div>
+      <div class="filter-group"><label for="sort">排序</label><select id="sort"><option value="count">漲停次數</option><option value="longest">最長連板</option><option value="current">截至最新交易日連板</option><option value="last_date">最近漲停日</option></select></div>
+    </section>
+
+    <div id="notice" class="notice" role="status" aria-live="polite">準備載入交易日與漲停資料…</div>
+
+    <section class="metrics" aria-label="期間摘要">
+      <article class="metric"><span>資料完整度</span><strong id="metric-coverage">—</strong><small id="metric-coverage-sub">交易日已驗證</small></article>
+      <article class="metric"><span>漲停紀錄</span><strong id="metric-hits">—</strong><small>期間已收錄次數</small></article>
+      <article class="metric"><span>漲停股票</span><strong id="metric-stocks">—</strong><small>上市／上櫃普通股</small></article>
+      <article class="metric"><span>最高連板</span><strong id="metric-streak">—</strong><small>完整期間才計算</small></article>
+    </section>
+
+    <section class="panel chart-panel" aria-labelledby="chart-title">
+      <div class="section-heading"><div><span class="section-kicker">MARKET PULSE</span><h2 id="chart-title">每日漲停家數</h2></div><p>藍色：上市　橘色：上櫃　灰／紅：缺漏或失敗</p></div>
+      <div class="chart-scroll"><svg id="daily-chart" role="img" aria-label="每日 TWSE 與 TPEx 漲停家數長條圖"></svg></div>
+      <div id="chart-table" class="sr-only"></div>
+    </section>
+
+    <section class="panel ranking-panel" aria-labelledby="ranking-title">
+      <div class="section-heading ranking-heading"><div><span class="section-kicker">LEADERBOARD</span><h2 id="ranking-title">漲停排行榜</h2></div><label class="search"><span>搜尋股票</span><input id="search" type="search" placeholder="代號或名稱" autocomplete="off"></label></div>
+      <p class="table-hint">點選股票可查看期間每一次漲停的日期與價格。連板「—」表示資料不足以判定。</p>
+      <div class="table-scroll"><table><thead><tr><th>股票</th><th>市場</th><th>漲停次數</th><th>最長連板</th><th>目前連板</th><th>最近漲停</th></tr></thead><tbody id="ranking-body"></tbody></table></div>
+      <div id="empty" class="empty" hidden>此條件下沒有已收錄的漲停股票。</div>
+    </section>
+
+    <aside class="method" aria-label="資料說明"><strong>計算與資料說明</strong><p>交易日取自 TWSE 官方逐月行情日期；只有已驗證完成的 TWSE 與 TPEx 每日批次，才把未列出的股票視為該日「未漲停」。停牌、無成交與特殊交易制度的股票可能未出現在漲停清單：在完整市場日視為該日未漲停，並中斷「逐交易日連續漲停」；本資料無法再細分原因。遇到資料缺漏或抓取失敗，連板顯示未知。統計只涵蓋已收錄的交易日，非投資建議。</p></aside>
+  </main>
+  <footer class="wrap footer"><span>漲停觀測站</span><span>資料來源：TWSE、TPEx 官方公開資料</span></footer>
+</body>
+</html>
