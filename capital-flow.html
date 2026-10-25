@@ -1,0 +1,55 @@
+<!doctype html>
+<html lang="zh-Hant">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="description" content="台股官方產業每日估算法人淨買賣超與主要買賣超股票。">
+  <meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'self' https://script.google.com https://script.googleusercontent.com; style-src 'self'; base-uri 'none'; form-action 'none'">
+  <title>資金流向｜漲停觀測站</title>
+  <link rel="stylesheet" href="styles.css">
+  <link rel="stylesheet" href="capital-flow.css">
+  <script defer src="config.js"></script>
+  <script defer src="capital-flow-core.js"></script>
+  <script defer src="capital-flow.js"></script>
+</head>
+<body>
+  <div class="topline"></div>
+  <header class="site-header wrap">
+    <a class="brand" href="index.html" aria-label="返回漲停觀測站首頁"><span class="brand-mark">↗</span><span>漲停觀測站<small>TAIWAN LIMIT UP MONITOR</small></span></a>
+    <nav class="page-nav" aria-label="網站頁面"><a href="index.html">漲停統計</a><a href="capital-flow.html" aria-current="page">資金流向</a></nav>
+  </header>
+  <main class="wrap">
+    <section class="hero flow-hero">
+      <div class="eyebrow"><span class="live-dot"></span> OFFICIAL INDUSTRY FLOW</div>
+      <h1>看見產業，<br><em>也看見資料覆蓋率。</em></h1>
+      <p>依 TWSE／TPEx 官方個股行情及三大法人買賣超股數，估算當日產業淨買賣超。資料缺漏的產業另列供查閱，不併入完整排行。</p>
+      <div id="flow-meta" class="meta-line">正在讀取可用交易日…</div>
+    </section>
+    <section class="panel filters" aria-label="排行榜條件">
+      <div class="filter-group"><label for="flow-date">交易日期</label><select id="flow-date" disabled><option>讀取中…</option></select></div>
+      <div class="filter-group"><label for="flow-investor">法人別</label><select id="flow-investor"><option value="total">三大法人合計</option><option value="foreign">外資</option><option value="trust">投信</option><option value="dealer">自營商</option></select></div>
+      <div class="filter-group"><label for="flow-direction">排行方向</label><select id="flow-direction"><option value="buy">買超排行</option><option value="sell">賣超排行</option></select></div>
+    </section>
+    <div id="flow-notice" class="notice" role="status" aria-live="polite">正在讀取資料…</div>
+    <section class="metrics flow-metrics" aria-label="產業資料摘要">
+      <article class="metric"><span>官方產業</span><strong id="flow-sector-count">—</strong><small>當日分類數</small></article>
+      <article class="metric"><span>法人資料完整</span><strong id="flow-complete-count">—</strong><small>納入預設排行</small></article>
+      <article class="metric"><span>法人資料部分缺漏</span><strong id="flow-partial-count">—</strong><small>不納入完整排行</small></article>
+      <article class="metric"><span>主要買賣超個股</span><strong id="flow-stock-count">—</strong><small>每產業各方向最多五檔</small></article>
+    </section>
+    <section class="panel ranking-panel" aria-labelledby="flow-title">
+      <div class="section-heading"><div><span class="section-kicker">SECTOR LEADERBOARD</span><h2 id="flow-title">完整產業排行</h2></div><p>單位：億元 · 估算法人淨買賣超</p></div>
+      <p class="table-hint">只顯示法人金額覆蓋完整、且符合所選買超／賣超方向的產業。點選產業查看主要個股。</p>
+      <div class="table-scroll"><table class="flow-table"><thead><tr><th>名次</th><th>官方產業</th><th>估算淨買賣超</th><th>成交金額</th><th>上漲／下跌</th><th>漲停</th><th>法人覆蓋</th></tr></thead><tbody id="flow-ranking-body"></tbody></table></div>
+      <p id="flow-empty" class="empty" hidden>目前沒有符合條件的完整產業。</p>
+    </section>
+    <section class="panel ranking-panel" aria-labelledby="flow-partial-title">
+      <div class="section-heading"><div><span class="section-kicker">PARTIAL DATA</span><h2 id="flow-partial-title">資料不完整產業</h2></div><span class="partial-badge">不列入正式排行</span></div>
+      <p class="table-hint">按產業名稱排列。金額只代表已取得法人資料的股票，不能用來比較整個產業的淨買賣超。</p>
+      <div class="table-scroll"><table class="flow-table"><thead><tr><th>官方產業</th><th>已觀測估算金額</th><th>成交金額</th><th>上漲／下跌</th><th>漲停</th><th>法人覆蓋</th></tr></thead><tbody id="flow-partial-body"></tbody></table></div>
+    </section>
+    <aside class="method"><strong>計算與資料說明</strong><p>法人估算金額＝法人淨買賣超股數 × 當日收盤價，並非官方實際買進金額減賣出金額。金額原始單位為新台幣元，頁面換算為億元；缺漏欄位顯示「—」，不補 0。資料來源為 TWSE、TPEx 官方公開行情與三大法人資料。交易日與分類快照日分別標示；若分類快照晚於交易日，標記為回溯暫定分類。此頁只做當日分析，不提供多日資金輪動或投資預測。</p></aside>
+  </main>
+  <footer class="wrap footer"><span>漲停觀測站</span><span>資料來源：TWSE、TPEx 官方公開資料</span></footer>
+</body>
+</html>
