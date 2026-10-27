@@ -6,6 +6,7 @@
     'flow-ranking-body', 'flow-partial-body', 'flow-empty'];
   const el = Object.fromEntries(ids.map(id => [id, document.getElementById(id)]));
   let current = null;
+  let limitupMembers = {status: 'incomplete', categories: new Map()};
   let generation = 0;
 
   function dayInTaiwan() {
@@ -92,6 +93,26 @@
     }
     return wrapper;
   }
+  function limitupList(categoryId) {
+    const wrapper = document.createElement('section');
+    wrapper.className = 'flow-limitups';
+    const title = document.createElement('h3');
+    title.textContent = '當日漲停標的';
+    wrapper.appendChild(title);
+    for (const stock of limitupMembers.categories.get(categoryId) || []) {
+      const entry = document.createElement('p');
+      const link = document.createElement('a');
+      const target = new URL('explore.html', location.href);
+      target.searchParams.set('date', current.date);
+      target.searchParams.set('stock', stock.stock_id);
+      target.searchParams.set('market', stock.market);
+      link.href = target.toString();
+      link.textContent = `${stock.stock_id} ${stock.stock_name}`;
+      entry.append(link, document.createTextNode(`（${stock.market === 'TWSE' ? '上市' : '上櫃'}） · 收盤 ${stock.close} · 漲停價 ${stock.limit_up_price}`));
+      wrapper.appendChild(entry);
+    }
+    return wrapper;
+  }
   function appendSector(body, sector, rank, partial) {
     const row = document.createElement('tr');
     if (!partial) td(row, String(rank), 'flow-rank');
@@ -109,7 +130,24 @@
     td(row, CapitalFlowCore.billion(amount), partial ? 'flow-partial-amount' : 'number');
     td(row, CapitalFlowCore.billion(sector.trade_value));
     td(row, `${sector.up_count}／${sector.down_count}`);
-    td(row, String(sector.limit_up_count));
+    const limitCell = td(row, '');
+    if (limitupMembers.status === 'complete' && Number(sector.limit_up_count) > 0) {
+      const limitButton = document.createElement('button');
+      limitButton.type = 'button';
+      limitButton.className = 'flow-limit-button';
+      limitButton.textContent = `${sector.limit_up_count} 檔`;
+      limitButton.setAttribute('aria-expanded', 'false');
+      limitCell.appendChild(limitButton);
+      limitButton.addEventListener('click', () => {
+        const panel = detail.querySelector('.flow-limitups');
+        panel.hidden = !panel.hidden;
+        detail.hidden = false;
+        limitButton.setAttribute('aria-expanded', String(!panel.hidden));
+      });
+    } else {
+      limitCell.textContent = limitupMembers.status === 'complete' ? '0 檔'
+        : limitupMembers.status === 'mismatch' ? '對應異常' : '漲停資料未完成';
+    }
     td(row, `${sector.valid_stock_count}/${sector.constituent_count}`);
     body.appendChild(row);
     const detail = document.createElement('tr');
@@ -123,6 +161,11 @@
       (sector.classification_status === 'provisional_snapshot'
         ? `分類快照 ${sector.category_snapshot_date}：回溯暫定分類。` : '分類已驗證。');
     cell.append(note, leaderList(sector.category_id));
+    if (limitupMembers.status === 'complete' && Number(sector.limit_up_count) > 0) {
+      const listing = limitupList(sector.category_id);
+      listing.hidden = true;
+      cell.appendChild(listing);
+    }
     body.appendChild(detail);
     button.addEventListener('click', () => {
       detail.hidden = !detail.hidden;
@@ -158,7 +201,38 @@
       const data = CapitalFlowCore.validDay(await request({action: 'sector_data', from: day, to: day}));
       if (token !== generation) return;
       current = data;
+      limitupMembers = {status: 'incomplete', categories: new Map()};
       render();
+      try {
+        const [mapping, days] = await Promise.all([
+          request({action: 'sector_limitups', from: day, to: day}),
+          request({action: 'days', from: day, to: day})
+        ]);
+        if (token !== generation) return;
+        const status = days.statuses?.find(item => item.date === day);
+        if (!status || status.status !== 'complete') return;
+        let offset = 0;
+        const quotes = [];
+        while (true) {
+          const page = await request({action: 'rows', from: day, to: day, limit: 500, offset});
+          if (token !== generation) return;
+          if (!Array.isArray(page.rows) || !Number.isInteger(page.total_rows) ||
+              page.total_rows !== status.twse_count + status.tpex_count) throw new Error('漲停明細筆數不符');
+          quotes.push(...page.rows);
+          if (page.next_offset == null) break;
+          if (!Number.isInteger(page.next_offset) || page.next_offset <= offset || quotes.length > 2000) {
+            throw new Error('漲停明細分頁異常');
+          }
+          offset = page.next_offset;
+        }
+        limitupMembers = CapitalFlowCore.sectorLimitups(data, mapping, status, quotes);
+        render();
+      } catch (_) {
+        if (token === generation) {
+          limitupMembers = {status: 'incomplete', categories: new Map()};
+          render();
+        }
+      }
     } catch (error) {
       if (token !== generation) return;
       current = null;

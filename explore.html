@@ -1,0 +1,52 @@
+<!doctype html>
+<html lang="zh-Hant">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="description" content="依交易日查詢台股漲停股票、個股歷史與交易日連板。">
+  <meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'self' https://script.google.com https://script.googleusercontent.com; style-src 'self'; base-uri 'none'; form-action 'none'">
+  <title>日期與個股查詢｜漲停觀測站</title>
+  <link rel="stylesheet" href="styles.css">
+  <link rel="stylesheet" href="capital-flow.css">
+  <link rel="stylesheet" href="explore.css">
+  <script defer src="config.js"></script>
+  <script defer src="stats.js"></script>
+  <script defer src="explorer-core.js"></script>
+  <script defer src="explore.js"></script>
+</head>
+<body>
+  <div class="topline"></div>
+  <header class="site-header wrap">
+    <a class="brand" href="index.html"><span class="brand-mark">↗</span><span>漲停觀測站<small>TAIWAN LIMIT UP MONITOR</small></span></a>
+    <nav class="page-nav" aria-label="網站頁面"><a href="index.html">漲停統計</a><a href="explore.html" aria-current="page">日期與個股</a><a href="capital-flow.html">資金流向</a></nav>
+  </header>
+  <main class="wrap">
+    <section class="hero explore-hero"><div class="eyebrow"><span class="live-dot"></span> STOCK EXPLORER</div><h1>查交易日，<br><em>看個股漲停足跡。</em></h1><p>上市與上櫃資料按官方交易日整理。缺漏日期不會顯示成零漲停，也不會誤算連板。</p></section>
+    <section class="panel filters" aria-label="查詢條件">
+      <div class="filter-group"><label for="explore-date">交易日期</label><input id="explore-date" type="date"></div>
+      <div class="filter-group"><label for="explore-search">股票代號或名稱</label><input id="explore-search" type="search" placeholder="搜尋當日或近 60 交易日" autocomplete="off"></div>
+      <div class="filter-group"><label for="explore-market">市場</label><select id="explore-market"><option value="ALL">上市 + 上櫃</option><option value="TWSE">上市 TWSE</option><option value="TPEx">上櫃 TPEx</option></select></div>
+    </section>
+    <div id="explore-notice" class="notice" role="status" aria-live="polite">正在讀取交易日資料…</div>
+    <section class="panel ranking-panel" aria-labelledby="day-title">
+      <div class="section-heading"><div><span class="section-kicker">DAILY LIMIT UP</span><h2 id="day-title">指定日期漲停股票</h2></div><strong id="day-count" class="explore-count">—</strong></div>
+      <p id="day-market-count" class="table-hint">資料待載入。</p>
+      <div class="table-scroll"><table><thead><tr><th>股票</th><th>市場</th><th>收盤價</th><th>漲停價</th></tr></thead><tbody id="explore-day-body"></tbody></table></div>
+      <p id="explore-day-empty" class="empty" hidden>此查詢沒有符合的股票。</p>
+    </section>
+    <section class="panel ranking-panel" aria-labelledby="search-title">
+      <div class="section-heading"><div><span class="section-kicker">STOCK SEARCH</span><h2 id="search-title">個股搜尋結果</h2></div><p>可搜尋近 60 個已確認交易日的漲停紀錄</p></div>
+      <div id="explore-choices" class="explore-choices"></div>
+    </section>
+    <section id="stock-panel" class="panel ranking-panel" aria-labelledby="stock-title" hidden>
+      <div class="section-heading"><div><span class="section-kicker">STOCK DETAIL</span><h2 id="stock-title">個股漲停歷史</h2></div><span id="stock-market" class="pill"></span></div>
+      <div id="stock-windows" class="explore-windows"></div>
+      <div class="explore-tabs" role="tablist" aria-label="個股詳細資料"><button id="history-tab" type="button" role="tab" aria-selected="true" aria-controls="history-content">漲停歷史</button><button id="notes-tab" type="button" role="tab" aria-selected="false" aria-controls="notes-content">研究筆記</button></div>
+      <div id="history-content" role="tabpanel" aria-labelledby="history-tab"><p id="stock-streak" class="table-hint"></p><div id="stock-history" class="detail-list"></div></div>
+      <div id="notes-content" role="tabpanel" aria-labelledby="notes-tab" hidden><p class="notice warning">研究筆記預設私人。管理者登入與寫入方式確認後才會啟用；公開網站不讀取私人備註。</p><div class="note-categories" aria-label="規劃中的筆記分類"><span>券商籌碼</span><span>基本面</span><span>技術面</span><span>法人動向</span><span>題材新聞</span><span>其他</span></div></div>
+    </section>
+    <aside class="method"><strong>資料範圍</strong><p>漲停次數按已收錄的交易日計算；不足 5、10、20、30 或 60 日時會標示完整度。連板只有對應期間所有官方交易日資料都完整時才顯示。研究筆記尚未開放，公開 API 不提供私人內容。</p></aside>
+  </main>
+  <footer class="wrap footer"><span>漲停觀測站</span><span>資料來源：TWSE、TPEx 官方公開資料</span></footer>
+</body>
+</html>

@@ -59,5 +59,57 @@
         row.amount_method !== 'estimated_amount')) throw new Error('個股資料格式不完整');
     return data;
   }
-  return {AMOUNT_FIELDS, amount, partition, leaders, billion, validDay};
+  function sectorLimitups(sectorDay, mapping, limitupDay, rows) {
+    if (!sectorDay || !Array.isArray(sectorDay.rows) || !mapping ||
+        mapping.ok !== true || mapping.date !== sectorDay.date ||
+        !Array.isArray(mapping.categories) || !limitupDay ||
+        limitupDay.date !== sectorDay.date || limitupDay.status !== 'complete' ||
+        !Array.isArray(rows) || mapping.categories.length !== sectorDay.rows.length) {
+      return {status: 'incomplete', categories: new Map()};
+    }
+    const quotes = new Map();
+    for (const row of rows) {
+      if (row.date !== sectorDay.date || !['TWSE', 'TPEx'].includes(row.market) ||
+          !/^[1-9]\d{3}$/.test(row.stock_id) || !row.stock_name ||
+          !Number.isFinite(Number(row.close)) ||
+          Number(row.close) !== Number(row.limit_up_price) || quotes.has(row.stock_id)) {
+        return {status: 'mismatch', categories: new Map()};
+      }
+      quotes.set(row.stock_id, row);
+    }
+    if (rows.filter(row => row.market === 'TWSE').length !== limitupDay.twse_count ||
+        rows.filter(row => row.market === 'TPEx').length !== limitupDay.tpex_count) {
+      return {status: 'mismatch', categories: new Map()};
+    }
+    const categories = new Map();
+    for (const category of mapping.categories) {
+      const sector = sectorDay.rows.find(item => item.category_id === category.category_id);
+      if (!sector || category.date !== sectorDay.date ||
+          category.category_snapshot_date !== sectorDay.category_snapshot_date ||
+          !Array.isArray(category.members) || categories.has(category.category_id)) {
+        return {status: 'mismatch', categories: new Map()};
+      }
+      const seen = new Set();
+      const matched = [];
+      for (const member of category.members) {
+        if (!member || !['TWSE', 'TPEx'].includes(member.market) ||
+            !/^[1-9]\d{3}$/.test(member.stock_id) || seen.has(member.stock_id)) {
+          return {status: 'mismatch', categories: new Map()};
+        }
+        seen.add(member.stock_id);
+        const quote = quotes.get(member.stock_id);
+        if (!quote || quote.market !== member.market) {
+          return {status: 'mismatch', categories: new Map()};
+        }
+        matched.push(quote);
+      }
+      if (matched.length !== Number(sector.limit_up_count)) {
+        return {status: 'mismatch', categories: new Map()};
+      }
+      matched.sort((a, b) => a.stock_id.localeCompare(b.stock_id));
+      categories.set(category.category_id, matched);
+    }
+    return {status: 'complete', categories};
+  }
+  return {AMOUNT_FIELDS, amount, partition, leaders, billion, validDay, sectorLimitups};
 });
