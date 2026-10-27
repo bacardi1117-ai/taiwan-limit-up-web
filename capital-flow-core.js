@@ -111,5 +111,11 @@
     }
     return {status: 'complete', categories};
   }
-  return {AMOUNT_FIELDS, amount, partition, leaders, billion, validDay, sectorLimitups};
+  function limitupLabel(status, count) {
+    if (status === 'complete') return `${count} 檔`;
+    return {mismatch: '對應異常', mapping_unavailable: '產業對照未完成',
+      unavailable: '名單暫不可用', incomplete: '漲停資料未完成'}[status] || '名單暫不可用';
+  }
+  return {AMOUNT_FIELDS, amount, partition, leaders, billion, validDay,
+    sectorLimitups, limitupLabel};
 });

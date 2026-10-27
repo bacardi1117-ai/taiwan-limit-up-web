@@ -45,11 +45,15 @@
         delete window[callback];
         script.remove();
         if (error) reject(error);
-        else if (!data || data.ok !== true) reject(new Error({
+        else if (!data || data.ok !== true) {
+          const failure = new Error({
           public_read_disabled: '公開查詢尚未啟用。',
           sector_day_incomplete: '此日產業資料尚未完整寫入。',
           invalid_date_range: '查詢日期不合法。'
-        }[data?.error] || '產業資料暫時無法讀取。'));
+          }[data?.error] || '產業資料暫時無法讀取。');
+          failure.code = data?.error || 'api_error';
+          reject(failure);
+        }
         else resolve(data);
       };
       window[callback] = data => finish(null, data);
@@ -135,7 +139,7 @@
       const limitButton = document.createElement('button');
       limitButton.type = 'button';
       limitButton.className = 'flow-limit-button';
-      limitButton.textContent = `${sector.limit_up_count} 檔`;
+      limitButton.textContent = CapitalFlowCore.limitupLabel('complete', sector.limit_up_count);
       limitButton.setAttribute('aria-expanded', 'false');
       limitCell.appendChild(limitButton);
       limitButton.addEventListener('click', () => {
@@ -145,8 +149,7 @@
         limitButton.setAttribute('aria-expanded', String(!panel.hidden));
       });
     } else {
-      limitCell.textContent = limitupMembers.status === 'complete' ? '0 檔'
-        : limitupMembers.status === 'mismatch' ? '對應異常' : '漲停資料未完成';
+      limitCell.textContent = CapitalFlowCore.limitupLabel(limitupMembers.status, 0);
     }
     td(row, `${sector.valid_stock_count}/${sector.constituent_count}`);
     body.appendChild(row);
@@ -204,32 +207,35 @@
       limitupMembers = {status: 'incomplete', categories: new Map()};
       render();
       try {
-        const [mapping, days] = await Promise.all([
-          request({action: 'sector_limitups', from: day, to: day}),
-          request({action: 'days', from: day, to: day})
-        ]);
+        const days = await request({action: 'days', from: day, to: day});
         if (token !== generation) return;
         const status = days.statuses?.find(item => item.date === day);
         if (!status || status.status !== 'complete') return;
+        const mapping = await request({action: 'sector_limitups', from: day, to: day});
+        if (token !== generation) return;
         let offset = 0;
         const quotes = [];
         while (true) {
           const page = await request({action: 'rows', from: day, to: day, limit: 500, offset});
           if (token !== generation) return;
           if (!Array.isArray(page.rows) || !Number.isInteger(page.total_rows) ||
-              page.total_rows !== status.twse_count + status.tpex_count) throw new Error('漲停明細筆數不符');
+              page.total_rows !== status.twse_count + status.tpex_count) {
+            throw Object.assign(new Error('漲停明細筆數不符'), {code: 'sector_members_mismatch'});
+          }
           quotes.push(...page.rows);
           if (page.next_offset == null) break;
           if (!Number.isInteger(page.next_offset) || page.next_offset <= offset || quotes.length > 2000) {
-            throw new Error('漲停明細分頁異常');
+            throw Object.assign(new Error('漲停明細分頁異常'), {code: 'sector_members_mismatch'});
           }
           offset = page.next_offset;
         }
         limitupMembers = CapitalFlowCore.sectorLimitups(data, mapping, status, quotes);
         render();
-      } catch (_) {
+      } catch (error) {
         if (token === generation) {
-          limitupMembers = {status: 'incomplete', categories: new Map()};
+          const status = error.code === 'sector_members_unavailable' ? 'mapping_unavailable'
+            : error.code === 'sector_members_mismatch' ? 'mismatch' : 'unavailable';
+          limitupMembers = {status, categories: new Map()};
           render();
         }
       }
