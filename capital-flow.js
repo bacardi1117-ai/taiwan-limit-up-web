@@ -207,12 +207,14 @@
       limitupMembers = {status: 'incomplete', categories: new Map()};
       render();
       try {
+        // A missing mapping is distinct from missing market data. The mapping
+        // endpoint itself requires both sector and limit-up day to be complete.
+        const mapping = await request({action: 'sector_limitups', from: day, to: day});
+        if (token !== generation) return;
         const days = await request({action: 'days', from: day, to: day});
         if (token !== generation) return;
         const status = days.statuses?.find(item => item.date === day);
         if (!status || status.status !== 'complete') return;
-        const mapping = await request({action: 'sector_limitups', from: day, to: day});
-        if (token !== generation) return;
         let offset = 0;
         const quotes = [];
         while (true) {
